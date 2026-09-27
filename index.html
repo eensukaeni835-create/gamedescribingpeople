@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRAMMAR SPACE MISSION: Describing People</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for futuristic cartoon vibe -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- html2pdf.js for Downloading PDF Certificate -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        * {
+            font-family: 'Fredoka', 'Outfit', sans-serif;
+            user-select: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+
+        /* Background Starfield Canvas */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Sci-Fi Glowing Effects */
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
+        }
+        .glow-yellow {
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.7);
+        }
+        .text-glow {
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(168, 85, 247, 0.6);
+        }
+
+        /* Planet Hover & Pulse Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s ease-in-out infinite;
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+        }
+
+        .btn-space {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        .btn-space:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+        }
+        .btn-space:active:not(:disabled) {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Certificate Print CSS */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #printable-certificate, #printable-certificate * {
+                visibility: visible;
+            }
+            #printable-certificate {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100vw;
+                height: 100vh;
+                margin: 0;
+                padding: 24px;
+                box-sizing: border-box;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen overflow-x-hidden relative flex flex-col justify-between">
+
+    <!-- Background Starfield Canvas -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Top Navigation & Status Bar -->
+    <header class="relative z-20 w-full p-4 glass-panel border-b border-slate-800 sticky top-0 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand / Title -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="app.navToGalaxy()">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-xl shadow-lg animate-pulse-slow">
+                    🚀
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-200 to-purple-400">
+                        GRAMMAR SPACE MISSION
+                    </h1>
+                    <p class="text-xs text-cyan-300 font-medium">Save Planet Grammar!</p>
+                </div>
+            </div>
+
+            <!-- Student Profile & Score Summary HUD -->
+            <div id="hud-stats" class="hidden flex items-center space-x-4 md:space-x-6 bg-slate-900/80 px-4 py-2 rounded-2xl border border-slate-700/60">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">👩‍🚀</span>
+                    <div>
+                        <p id="hud-student-name" class="text-xs text-slate-400">Explorer</p>
+                        <p id="hud-student-class" class="text-sm font-bold text-cyan-300">-</p>
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">⭐</span>
+                    <div>
+                        <p class="text-xs text-slate-400">Score</p>
+                        <p id="hud-score" class="text-sm font-bold text-yellow-400">0 / 100</p>
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">🌟</span>
+                    <div>
+                        <p class="text-xs text-slate-400">Stars</p>
+                        <p id="hud-stars" class="text-sm font-bold text-amber-300">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls: Sound Toggle, Speech, & Home -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-sound-toggle" onclick="app.toggleSound()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-cyan-400 transition" title="Toggle Sound Effects">
+                    <i id="icon-sound" class="fas fa-volume-up text-lg"></i>
+                </button>
+                <button id="btn-home" onclick="app.navToGalaxy()" class="hidden p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-purple-400 transition" title="Galaxy Map">
+                    <i class="fas fa-globe text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center my-auto">
+
+        <!-- ================= SCREEN 1: OPENING ================= -->
+        <section id="screen-opening" class="view-screen text-center flex flex-col items-center justify-center space-y-6 py-8">
+            <div class="relative">
+                <div class="w-40 h-40 md:w-52 md:h-52 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-cyan-400 p-1 animate-float shadow-2xl glow-purple">
+                    <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center overflow-hidden relative">
+                        <span class="text-8xl md:text-9xl transform hover:scale-110 transition duration-300">🪐</span>
+                    </div>
+                </div>
+                <!-- Mini Spaceship Orbiting -->
+                <div class="absolute top-0 left-0 w-full h-full animate-spin text-3xl pointer-events-none" style="animation-duration: 12s;">
+                    🚀
+                </div>
+            </div>
+
+            <div class="space-y-3 max-w-2xl">
+                <h1 class="text-4xl md:text-6xl font-black tracking-wide text-glow bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-purple-300 to-yellow-300">
+                    GRAMMAR SPACE MISSION
+                </h1>
+                <p class="text-xl md:text-2xl font-bold text-cyan-300">
+                    "Describing People – Save Planet Grammar!"
+                </p>
+                <p class="text-slate-300 text-sm md:text-base leading-relaxed bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                    Galaksi Grammar sedang mengalami gangguan energi! Planet Grammar kehilangan kekuatannya. 
+                    Bantu <span class="text-yellow-300 font-bold">Captain Nova</span> menjelajahi 5 planet, kuasai tata bahasa Inggris, dan pulihkan sistem komunikasi galaksi!
+                </p>
+            </div>
+
+            <!-- Captain Nova Welcome Speech Bubble -->
+            <div class="glass-panel p-4 rounded-2xl max-w-md flex items-center space-x-4 border border-cyan-500/30">
+                <div class="text-4xl">👩‍🚀</div>
+                <div class="text-left">
+                    <p class="text-xs text-cyan-400 font-bold uppercase tracking-wider">Captain Nova</p>
+                    <p class="text-sm font-medium text-slate-200">"Welcome, Space Explorer! Are you ready for your first mission?"</p>
+                </div>
+            </div>
+
+            <button onclick="app.goToIdentity()" class="btn-space px-8 py-4 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 rounded-2xl text-xl font-bold tracking-wider text-white shadow-xl glow-cyan flex items-center space-x-3">
+                <span>START MISSION</span>
+                <i class="fas fa-rocket"></i>
+            </button>
+        </section>
+
+        <!-- ================= SCREEN 2: STUDENT IDENTITY ================= -->
+        <section id="screen-identity" class="view-screen hidden max-w-md mx-auto w-full">
+            <div class="glass-panel p-6 md:p-8 rounded-3xl border border-cyan-500/30 shadow-2xl space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="text-5xl">👩‍🚀</div>
+                    <h2 class="text-2xl font-bold text-cyan-300">Explorer Registration</h2>
+                    <p class="text-xs text-slate-400">Masukkan identitasmu untuk mengakses Galaksi Grammar</p>
+                </div>
+
+                <form id="form-identity" onsubmit="app.submitIdentity(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-cyan-300 uppercase mb-2">Student Name (Nama Siswa)</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="input-name" required placeholder="e.g. Andi Pratama"
+                                class="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-white font-medium placeholder-slate-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-cyan-300 uppercase mb-2">Class (Kelas)</label>
+                        <div class="relative">
+                            <i class="fas fa-graduation-cap absolute left-4 top-3.5 text-slate-500"></i>
+                            <input type="text" id="input-class" required placeholder="e.g. VII-A"
+                                class="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-white font-medium placeholder-slate-500">
+                        </div>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="identity-error" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-xs text-center font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Please enter your name and class first!
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold text-lg text-white shadow-lg btn-space flex items-center justify-center space-x-2">
+                        <span>LET'S EXPLORE!</span>
+                        <i class="fas fa-compass"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= SCREEN 3: MAIN MENU / GALAXY MAP ================= -->
+        <section id="screen-galaxy" class="view-screen hidden space-y-6">
+            <!-- Galaxy Title Banner -->
+            <div class="text-center space-y-2">
+                <span class="px-3 py-1 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest">
+                    Galaxy Navigation Map
+                </span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white">Save Planet Grammar</h2>
+                <p class="text-slate-300 text-sm max-w-xl mx-auto">
+                    Selesaikan setiap misi planet secara berurutan untuk memulihkan energi sistem komunikasi galaksi!
+                </p>
+            </div>
+
+            <!-- Mission Planets Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 pt-4">
+                <!-- Planet Cards generated via JS -->
+            </div>
+
+            <!-- Captain Nova Encouragement Footer -->
+            <div class="glass-panel p-4 rounded-2xl flex items-center space-x-4 border border-slate-800">
+                <div class="text-4xl">👩‍🚀</div>
+                <div>
+                    <p class="text-xs text-cyan-400 font-bold uppercase">Captain Nova Status</p>
+                    <p id="galaxy-status-text" class="text-sm text-slate-200">
+                        "Pilih planet pertama untuk memulai misi grammar!"
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SCREEN 4: MATERIAL BRIEFING MODAL/VIEW ================= -->
+        <section id="screen-material" class="view-screen hidden max-w-2xl mx-auto w-full">
+            <div class="glass-panel p-6 md:p-8 rounded-3xl border border-cyan-500/40 shadow-2xl space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <span id="briefing-planet-icon" class="text-4xl">🪐</span>
+                        <div>
+                            <p class="text-xs text-cyan-400 font-bold uppercase tracking-wider">Mission Briefing</p>
+                            <h3 id="briefing-planet-title" class="text-2xl font-bold text-white">Planet Mission</h3>
+                        </div>
+                    </div>
+                    <span id="briefing-planet-score" class="px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 rounded-full text-xs font-bold">
+                        20 Points Max
+                    </span>
+                </div>
+
+                <!-- Briefing Material Content Container -->
+                <div id="briefing-content" class="space-y-4 text-slate-200 text-sm leading-relaxed max-h-80 overflow-y-auto pr-2">
+                    <!-- Dynamic Material Injected Here -->
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-slate-700/60">
+                    <button onclick="app.navToGalaxy()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 font-bold text-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Map
+                    </button>
+                    <button onclick="app.startQuizFromBriefing()" class="btn-space px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg flex items-center space-x-2">
+                        <span>START QUIZ</span>
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SCREEN 5: INTERACTIVE QUIZ HUD ================= -->
+        <section id="screen-quiz" class="view-screen hidden space-y-6 max-w-3xl mx-auto w-full">
+            <!-- Quiz HUD Header -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 border border-cyan-500/30">
+                <div class="flex items-center space-x-3">
+                    <span id="quiz-planet-icon" class="text-3xl">🪐</span>
+                    <div>
+                        <h4 id="quiz-planet-name" class="font-bold text-cyan-300 text-sm">Planet Mission</h4>
+                        <p id="quiz-question-counter" class="text-xs text-slate-400">Question 1 of 5</p>
+                    </div>
+                </div>
+
+                <!-- Mission Progress Bar -->
+                <div class="flex-grow max-w-xs mx-2">
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Progress</span>
+                        <span id="quiz-progress-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+                        <div id="quiz-progress-bar" class="bg-gradient-to-r from-cyan-400 to-purple-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="app.speakQuestion()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-cyan-300 transition" title="Listen (Text To Speech)">
+                        <i class="fas fa-volume-high"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Captain Nova Feedback Dialogue Box -->
+            <div class="glass-panel p-4 rounded-2xl flex items-start space-x-4 border border-slate-700 relative overflow-hidden">
+                <div class="text-4xl flex-shrink-0 animate-bounce">👩‍🚀</div>
+                <div class="flex-grow">
+                    <p class="text-xs text-cyan-400 font-bold uppercase tracking-wider">Captain Nova Guidance</p>
+                    <p id="quiz-dialogue-text" class="text-sm text-slate-200 mt-0.5">
+                        "Read carefully and select the correct answer to energize our spacecraft!"
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Question Card -->
+            <div class="glass-panel p-6 md:p-8 rounded-3xl border border-slate-700 space-y-6 shadow-2xl relative">
+                <!-- Character Avatar Preview if available -->
+                <div id="quiz-character-box" class="hidden flex items-center space-x-4 p-4 bg-slate-900/80 rounded-2xl border border-slate-800">
+                    <div id="quiz-character-avatar" class="text-5xl">👽</div>
+                    <div>
+                        <h5 id="quiz-character-name" class="font-bold text-yellow-300 text-base">Alien Character</h5>
+                        <p id="quiz-character-desc" class="text-xs text-slate-300">Female, tall, long hair.</p>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <div>
+                    <span id="quiz-question-tag" class="text-xs font-bold text-cyan-400 uppercase tracking-widest block mb-2">QUESTION</span>
+                    <h3 id="quiz-question-text" class="text-xl md:text-2xl font-bold text-white leading-relaxed">
+                        Budi is my friend. ___ is kind.
+                    </h3>
+                </div>
+
+                <!-- Standard Multiple Choice Options Grid -->
+                <div id="quiz-options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <!-- Dynamic Buttons -->
+                </div>
+
+                <!-- Word Order Interactive Construct Container (For Sentence Builder Question) -->
+                <div id="quiz-word-order-container" class="hidden space-y-4">
+                    <p class="text-xs text-cyan-300">Klik kata-kata di bawah sesuai urutan kalimat yang benar:</p>
+                    <div id="quiz-sentence-dropzone" class="min-h-[56px] p-3 bg-slate-900 border-2 border-dashed border-cyan-500/50 rounded-2xl flex flex-wrap gap-2 items-center">
+                        <span class="text-xs text-slate-500 italic" id="dropzone-placeholder">Klik kata di bawah ini...</span>
+                    </div>
+                    <div id="quiz-word-bank" class="flex flex-wrap gap-2 pt-2">
+                        <!-- Dynamic Word Tiles -->
+                    </div>
+                    <div class="flex space-x-2 pt-2">
+                        <button onclick="app.clearWordOrder()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700">
+                            Clear / Reset
+                        </button>
+                        <button onclick="app.submitWordOrder()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg">
+                            Check Sentence
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Navigation Controls -->
+            <div class="flex items-center justify-between">
+                <button onclick="app.navToGalaxy()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold border border-slate-700">
+                    <i class="fas fa-map-marked-alt mr-2"></i> Galaxy Map
+                </button>
+                <button id="btn-next-question" onclick="app.nextQuestion()" class="hidden px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white shadow-lg btn-space flex items-center space-x-2">
+                    <span>NEXT QUESTION</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= SCREEN 6: RESULTS & SUMMARY ================= -->
+        <section id="screen-results" class="view-screen hidden max-w-2xl mx-auto w-full text-center space-y-6">
+            <div class="glass-panel p-8 rounded-3xl border border-cyan-500/40 shadow-2xl space-y-6">
+                <!-- Mission Complete Banner -->
+                <div class="space-y-2">
+                    <div class="inline-block p-4 bg-purple-500/20 rounded-full border border-purple-500/40 animate-bounce">
+                        <span class="text-6xl">🏆</span>
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-black text-glow bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-cyan-300 to-purple-300">
+                        MISSION COMPLETED!
+                    </h2>
+                    <p class="text-sm text-cyan-300 font-bold uppercase tracking-widest">Planet Grammar Is Saved!</p>
+                </div>
+
+                <!-- Award Tier Badge -->
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-3">
+                    <p class="text-xs text-slate-400 uppercase font-bold">Rank Awarded</p>
+                    <h3 id="result-rank-title" class="text-2xl md:text-3xl font-extrabold text-yellow-400">
+                        SPACE MASTER
+                    </h3>
+                    <p id="result-rank-message" class="text-sm text-slate-300 italic">
+                        "Congratulations! You are a Grammar Space Master!"
+                    </p>
+                </div>
+
+                <!-- Detailed Stats Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Explorer</p>
+                        <p id="result-name" class="font-bold text-white text-sm truncate">-</p>
+                        <p id="result-class" class="text-xs text-cyan-400 font-semibold">-</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Total Score</p>
+                        <p id="result-score" class="font-black text-yellow-400 text-xl">100 / 100</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Correct Qs</p>
+                        <p id="result-correct" class="font-bold text-emerald-400 text-xl">30 / 30</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-400">Energy Stars</p>
+                        <p id="result-stars" class="font-bold text-amber-300 text-xl">30 🌟</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col md:flex-row items-center justify-center gap-3 pt-4">
+                    <button onclick="app.showCertificate()" class="w-full md:w-auto px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-extrabold rounded-xl shadow-lg btn-space flex items-center justify-center space-x-2">
+                        <i class="fas fa-certificate text-lg"></i>
+                        <span>VIEW CERTIFICATE</span>
+                    </button>
+                    <button onclick="app.restartGame()" class="w-full md:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold rounded-xl btn-space flex items-center justify-center space-x-2">
+                        <i class="fas fa-redo"></i>
+                        <span>PLAY AGAIN</span>
+                    </button>
+                    <button onclick="app.navToGalaxy()" class="w-full md:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 font-bold rounded-xl btn-space flex items-center justify-center space-x-2">
+                        <i class="fas fa-globe"></i>
+                        <span>BACK TO GALAXY</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SCREEN 7: DIGITAL CERTIFICATE ================= -->
+        <section id="screen-certificate" class="view-screen hidden max-w-4xl mx-auto w-full space-y-6">
+            <!-- Action Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 no-print bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <button onclick="app.showResultsScreen()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-bold rounded-xl border border-slate-700 flex items-center space-x-2">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Results</span>
+                </button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="btn-download-pdf" onclick="app.downloadCertificatePDF()" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-sm rounded-xl shadow-lg flex items-center space-x-2 btn-space">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>🎓 DOWNLOAD CERTIFICATE (PDF)</span>
+                    </button>
+                    <button onclick="window.print()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg flex items-center space-x-2 btn-space">
+                        <i class="fas fa-print"></i>
+                        <span>🖨️ PRINT CERTIFICATE</span>
+                    </button>
+                    <button onclick="app.restartGame()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl shadow-lg flex items-center space-x-2 btn-space">
+                        <i class="fas fa-redo"></i>
+                        <span>🔄 PLAY AGAIN</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Certificate Container (A4 Landscape Proportions) -->
+            <div id="printable-certificate" class="bg-slate-950 text-white p-8 md:p-10 rounded-3xl border-4 border-yellow-400/90 shadow-2xl relative overflow-hidden text-center space-y-4 aspect-[1.414/1] flex flex-col justify-between">
+                <!-- Cosmic Background Decorations -->
+                <div class="absolute -top-12 -left-12 text-7xl opacity-20 pointer-events-none">🪐</div>
+                <div class="absolute -bottom-10 -right-10 text-8xl opacity-20 pointer-events-none">🚀</div>
+                <div class="absolute top-1/2 left-4 text-3xl opacity-30 pointer-events-none">👾</div>
+                <div class="absolute top-1/3 right-6 text-3xl opacity-30 pointer-events-none">🧕👽</div>
+                <div class="absolute inset-2 border-2 border-dashed border-cyan-500/40 rounded-2xl pointer-events-none"></div>
+
+                <!-- Certificate Header -->
+                <div class="space-y-1 relative z-10">
+                    <div class="flex justify-center items-center space-x-3 text-yellow-400 text-2xl">
+                        <span>⭐</span><span>🚀</span><span>🪐</span><span>🚀</span><span>⭐</span>
+                    </div>
+                    <p class="text-xs tracking-widest text-cyan-300 font-bold uppercase">Galactic Academy of English Language</p>
+                    <h2 class="text-3xl md:text-5xl font-black text-yellow-400 tracking-wider font-serif">
+                        CERTIFICATE OF ACHIEVEMENT
+                    </h2>
+                    <p class="text-xs text-slate-300 italic">This certificate is proudly presented to:</p>
+                </div>
+
+                <!-- Student Info -->
+                <div class="py-1 relative z-10 space-y-1">
+                    <h3 id="cert-student-name" class="text-3xl md:text-4xl font-black text-cyan-300 tracking-wide underline underline-offset-8 decoration-yellow-400">
+                        [STUDENT NAME]
+                    </h3>
+                    <p id="cert-student-class" class="text-sm font-bold text-slate-200">
+                        Class: [CLASS]
+                    </p>
+                </div>
+
+                <!-- Description Statement -->
+                <div class="space-y-1 relative z-10 max-w-2xl mx-auto text-xs md:text-sm text-slate-200 leading-relaxed">
+                    <p>Has successfully completed the Grammar Space Mission in</p>
+                    <p class="text-base md:text-lg font-extrabold text-yellow-300 bg-slate-900/80 px-4 py-1.5 rounded-xl border border-yellow-500/40 inline-block my-1">
+                        GRAMMAR SPACE MISSION – Describing People
+                    </p>
+                    <p>and restored the communication power grid of Planet Grammar!</p>
+                </div>
+
+                <!-- Award Badges & Score Stats Grid -->
+                <div class="grid grid-cols-3 gap-3 max-w-xl mx-auto py-1 relative z-10 w-full">
+                    <div class="p-2.5 bg-slate-900/90 rounded-xl border border-yellow-500/50">
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Final Score</p>
+                        <p id="cert-score" class="text-lg font-black text-yellow-400">0 / 100</p>
+                    </div>
+                    <div class="p-2.5 bg-slate-900/90 rounded-xl border border-cyan-500/50">
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Predicate Rank</p>
+                        <p id="cert-title" class="text-xs font-black text-cyan-300 truncate">Space Master</p>
+                    </div>
+                    <div class="p-2.5 bg-slate-900/90 rounded-xl border border-purple-500/50">
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Completion Date</p>
+                        <p id="cert-date" class="text-xs font-bold text-purple-300 truncate">-</p>
+                    </div>
+                </div>
+
+                <!-- Signatures & Official Validation -->
+                <div class="flex items-end justify-between pt-4 border-t border-slate-800 text-xs text-slate-300 relative z-10 px-4">
+                    <div class="text-center space-y-1">
+                        <div class="text-2xl">👩‍🚀</div>
+                        <div class="w-32 border-b border-slate-600 mx-auto my-1"></div>
+                        <p class="font-bold text-cyan-300 text-xs">Captain Nova</p>
+                        <p class="text-[10px] text-slate-400">Galactic Mission Leader</p>
+                    </div>
+
+                    <div class="text-center space-y-1">
+                        <!-- Digital Stamp Badge -->
+                        <div class="w-12 h-12 rounded-full border-2 border-dashed border-yellow-400 mx-auto flex items-center justify-center text-yellow-400 text-[10px] font-bold rotate-12 bg-yellow-400/10">
+                            PASSED
+                        </div>
+                        <p class="text-[10px] text-slate-400">Official Space Stamp</p>
+                    </div>
+
+                    <div class="text-center space-y-1">
+                        <!-- Digital Signature Graphic -->
+                        <div class="h-7 flex items-center justify-center">
+                            <span class="font-serif italic text-sm text-yellow-300 font-bold tracking-widest underline decoration-dashed">
+                                Een Sukaeni
+                            </span>
+                        </div>
+                        <div class="w-36 border-b border-slate-600 mx-auto my-1"></div>
+                        <p id="cert-teacher-name" class="font-bold text-yellow-300 text-xs">Een Sukaeni, S.Pd., Gr.</p>
+                        <p class="text-[10px] text-slate-400">English Teacher & Evaluator</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full py-3 text-center text-xs text-slate-500 glass-panel border-t border-slate-900">
+        <p>GRAMMAR SPACE MISSION &copy; 2026 | SMP Grade 7 English Learning Game</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            }
+
+            playTone(freq, type, duration, delay = 0) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                setTimeout(() => {
+                    try {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = type;
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + duration);
+                    } catch (e) { console.warn(e); }
+                }, delay);
+            }
+
+            playCorrect() {
+                this.playTone(523.25, 'sine', 0.15, 0);   // C5
+                this.playTone(659.25, 'sine', 0.15, 100); // E5
+                this.playTone(783.99, 'sine', 0.3, 200);  // G5
+            }
+
+            playIncorrect() {
+                this.playTone(220, 'sawtooth', 0.2, 0);   // A3
+                this.playTone(196, 'sawtooth', 0.3, 150); // G3
+            }
+
+            playClick() {
+                this.playTone(400, 'triangle', 0.05, 0);
+            }
+
+            playStar() {
+                this.playTone(880, 'sine', 0.1, 0);
+                this.playTone(1174.66, 'sine', 0.25, 80);
+            }
+
+            playFanfare() {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((n, i) => this.playTone(n, 'triangle', 0.3, i * 150));
+            }
+        }
+
+        const GAME_DATA = {
+            planets: [
+                {
+                    id: 1,
+                    name: "Pronoun Planet",
+                    icon: "🔴",
+                    mission: "IDENTIFY THE RIGHT PRONOUN",
+                    color: "from-red-500 to-rose-700",
+                    pointsPerQ: 4,
+                    briefing: `
+                        <h4 class="font-bold text-cyan-300 text-base mb-2">Subject Pronouns Guide:</h4>
+                        <p class="mb-2">Kata ganti subjek (Subject Pronouns) digunakan untuk menggantikan nama orang, hewan, atau benda:</p>
+                        <ul class="grid grid-cols-2 gap-2 text-xs font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                            <li><span class="text-yellow-400 font-bold">I</span> = Saya</li>
+                            <li><span class="text-yellow-400 font-bold">You</span> = Kamu/Kalian</li>
+                            <li><span class="text-yellow-400 font-bold">He</span> = Dia (Laki-laki)</li>
+                            <li><span class="text-yellow-400 font-bold">She</span> = Dia (Perempuan)</li>
+                            <li><span class="text-yellow-400 font-bold">It</span> = Benda / Hewan</li>
+                            <li><span class="text-yellow-400 font-bold">We</span> = Kami / Kita</li>
+                            <li><span class="text-yellow-400 font-bold">They</span> = Mereka</li>
+                        </ul>
+                    `,
+                    questions: [
+                        { text: "Budi is my friend. ___ is kind.", options: ["She", "He", "They", "We"], answer: 1 },
+                        { text: "Rina is my sister. ___ is beautiful.", options: ["He", "It", "She", "We"], answer: 2 },
+                        { text: "Rina and Sinta are friends. ___ are friendly.", options: ["She", "He", "They", "It"], answer: 2 },
+                        { text: "My cat is cute. ___ is white.", options: ["It", "He", "We", "They"], answer: 0 },
+                        { text: "Budi and I are classmates. ___ are students.", options: ["They", "We", "She", "He"], answer: 1 }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: "To Be Planet",
+                    icon: "🔵",
+                    mission: "CHOOSE THE CORRECT TO BE",
+                    color: "from-blue-500 to-cyan-600",
+                    pointsPerQ: 4,
+                    briefing: `
+                        <h4 class="font-bold text-cyan-300 text-base mb-2">To Be Rules (am, is, are):</h4>
+                        <p class="mb-2">Gunakan <b>To Be</b> yang tepat sesuai dengan subjeknya:</p>
+                        <ul class="space-y-1 text-xs font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                            <li><span class="text-cyan-300 font-bold">I</span> → <span class="text-yellow-400 font-bold">am</span></li>
+                            <li><span class="text-cyan-300 font-bold">He / She / It</span> → <span class="text-yellow-400 font-bold">is</span></li>
+                            <li><span class="text-cyan-300 font-bold">You / We / They</span> → <span class="text-yellow-400 font-bold">are</span></li>
+                        </ul>
+                    `,
+                    questions: [
+                        { text: "She ___ beautiful.", options: ["am", "is", "are", "have"], answer: 1 },
+                        { text: "I ___ a student.", options: ["am", "is", "are", "has"], answer: 0 },
+                        { text: "They ___ friendly.", options: ["am", "is", "are", "has"], answer: 2 },
+                        { text: "He ___ tall.", options: ["am", "is", "are", "have"], answer: 1 },
+                        { text: "We ___ classmates.", options: ["am", "is", "are", "has"], answer: 2 }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: "Have/Has Planet",
+                    icon: "🟢",
+                    mission: "FIND THE RIGHT POSSESSION",
+                    color: "from-emerald-500 to-teal-700",
+                    pointsPerQ: 4,
+                    briefing: `
+                        <h4 class="font-bold text-cyan-300 text-base mb-2">Have vs Has Rules:</h4>
+                        <p class="mb-2">Gunakan <b>have</b> dan <b>has</b> untuk mendeskripsikan kepemilikan atau ciri fisik (misal: rambut, mata):</p>
+                        <ul class="space-y-1 text-xs font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                            <li><span class="text-emerald-300 font-bold">I / You / We / They</span> → <span class="text-yellow-400 font-bold">have</span></li>
+                            <li><span class="text-emerald-300 font-bold">He / She / It</span> → <span class="text-yellow-400 font-bold">has</span></li>
+                        </ul>
+                    `,
+                    questions: [
+                        { text: "He ___ short black hair.", options: ["have", "has", "is", "are"], answer: 1 },
+                        { text: "They ___ big eyes.", options: ["has", "have", "is", "am"], answer: 1 },
+                        { text: "She ___ long hair.", options: ["have", "has", "are", "am"], answer: 1 },
+                        { text: "I ___ brown eyes.", options: ["has", "have", "is", "are"], answer: 1 },
+                        { text: "We ___ black hair.", options: ["has", "have", "is", "am"], answer: 1 }
+                    ]
+                },
+                {
+                    id: 4,
+                    name: "Description Planet",
+                    icon: "🟣",
+                    mission: "DESCRIBE THE ALIEN",
+                    color: "from-purple-500 to-indigo-700",
+                    pointsPerQ: 4,
+                    briefing: `
+                        <h4 class="font-bold text-cyan-300 text-base mb-2">Describing People & Characters:</h4>
+                        <p class="mb-2">Gabungkan Subject Pronouns, To Be, dan Have/Has untuk membentuk kalimat deskripsi yang utuh.</p>
+                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                            <p><span class="text-purple-300">Zora (Alien Perempuan):</span> She is friendly. She has long hair.</p>
+                            <p><span class="text-blue-300">Bimo (Alien Laki-laki):</span> He is funny. He has big eyes.</p>
+                        </div>
+                    `,
+                    questions: [
+                        {
+                            type: "character",
+                            character: { name: "Zora", avatar: "🧕👽", desc: "Female, tall, long hair." },
+                            text: "Look at Alien Zora (Female, tall, long hair). Complete: '___ is tall.'",
+                            options: ["He", "She", "They", "We"],
+                            answer: 1
+                        },
+                        {
+                            type: "character",
+                            character: { name: "Bimo", avatar: "👾", desc: "Male, tall, big eyes." },
+                            text: "Look at Alien Bimo. Complete: 'He ___ tall.'",
+                            options: ["am", "is", "are", "have"],
+                            answer: 1
+                        },
+                        {
+                            type: "character",
+                            character: { name: "Zora", avatar: "🧕👽", desc: "Female, tall, long hair." },
+                            text: "Look at Alien Zora. Complete: 'She ___ long hair.'",
+                            options: ["have", "has", "is", "are"],
+                            answer: 1
+                        },
+                        {
+                            type: "word-order",
+                            text: "Susun kata menjadi kalimat deskripsi yang benar:",
+                            words: ["has", "He", "short", "hair"],
+                            correctSentence: "He has short hair"
+                        },
+                        {
+                            text: "Pilih deskripsi yang benar untuk alien perempuan dengan rambut panjang:",
+                            options: [
+                                "She is tall. She has long hair.",
+                                "He is tall. He have long hair.",
+                                "She are tall. She has long hair.",
+                                "They is tall. They has long hair."
+                            ],
+                            answer: 0
+                        }
+                    ]
+                },
+                {
+                    id: 5,
+                    name: "Final Mission",
+                    icon: "🌟",
+                    mission: "SAVE PLANET GRAMMAR",
+                    color: "from-amber-500 to-yellow-600",
+                    pointsPerQ: 2,
+                    briefing: `
+                        <h4 class="font-bold text-yellow-300 text-base mb-2">FINAL MISSION!</h4>
+                        <p class="mb-2">Uji seluruh pemahaman tata bahasa Inggris milikmu dalam 10 soal evaluasi gabungan. Pulihkan daya energi Planet Grammar!</p>
+                    `,
+                    questions: [
+                        { text: "Rina and Sinta ___ students.", options: ["am", "is", "are", "has"], answer: 2 },
+                        { text: "He ___ big brown eyes.", options: ["have", "has", "is", "are"], answer: 1 },
+                        { text: "___ is my best friend. (Rina)", options: ["He", "She", "They", "We"], answer: 1 },
+                        { text: "I ___ friendly.", options: ["am", "is", "are", "has"], answer: 0 },
+                        { text: "They ___ curly hair.", options: ["has", "have", "is", "am"], answer: 1 },
+                        { text: "My brother ___ tall.", options: ["am", "is", "are", "have"], answer: 1 },
+                        { text: "Budi and I are classmates. ___ are students.", options: ["They", "We", "He", "She"], answer: 1 },
+                        { text: "She ___ beautiful eyes.", options: ["have", "has", "is", "are"], answer: 1 },
+                        { text: "Choose the correct sentence.", options: ["He have short hair.", "He has short hair.", "He are short hair.", "He am short hair."], answer: 1 },
+                        { text: "Choose the correct description.", options: ["She is friendly. She has long hair.", "She are friendly. She have long hair.", "He is friendly. She has long hair.", "They is friendly. They has long hair."], answer: 0 }
+                    ]
+                }
+            ]
+        };
+
+        class GrammarSpaceApp {
+            constructor() {
+                this.sound = new SoundEngine();
+                this.student = { name: "", class: "" };
+                this.scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                this.unlockedPlanet = 1;
+                this.currentPlanetId = 1;
+                this.currentQuestionIdx = 0;
+                this.selectedWords = [];
+                this.answeredCurrentQuestion = false;
+
+                // Load cached state if available
+                this.loadState();
+            }
+
+            saveState() {
+                try {
+                    const data = {
+                        student: this.student,
+                        scores: this.scores,
+                        unlockedPlanet: this.unlockedPlanet
+                    };
+                    localStorage.setItem('grammar_space_save', JSON.stringify(data));
+                } catch(e){}
+            }
+
+            loadState() {
+                try {
+                    const saved = localStorage.getItem('grammar_space_save');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.student) this.student = parsed.student;
+                        if (parsed.scores) this.scores = parsed.scores;
+                        if (parsed.unlockedPlanet) this.unlockedPlanet = parsed.unlockedPlanet;
+                    }
+                } catch(e){}
+            }
+
+            toggleSound() {
+                this.sound.enabled = !this.sound.enabled;
+                const icon = document.getElementById('icon-sound');
+                if (this.sound.enabled) {
+                    icon.className = 'fas fa-volume-up text-lg';
+                    this.sound.playClick();
+                } else {
+                    icon.className = 'fas fa-volume-mute text-lg text-red-400';
+                }
+            }
+
+            showScreen(id) {
+                document.querySelectorAll('.view-screen').forEach(el => el.classList.add('hidden'));
+                const target = document.getElementById(id);
+                if (target) target.classList.remove('hidden');
+
+                // HUD Visibility
+                const hud = document.getElementById('hud-stats');
+                const btnHome = document.getElementById('btn-home');
+                if (id === 'screen-opening' || id === 'screen-identity') {
+                    hud.classList.add('hidden');
+                    btnHome.classList.add('hidden');
+                } else {
+                    hud.classList.remove('hidden');
+                    btnHome.classList.remove('hidden');
+                    this.updateHUD();
+                }
+            }
+
+            updateHUD() {
+                document.getElementById('hud-student-name').textContent = this.student.name || 'Explorer';
+                document.getElementById('hud-student-class').textContent = this.student.class || '-';
+                
+                const totalScore = this.getTotalScore();
+                document.getElementById('hud-score').textContent = `${totalScore} / 100`;
+
+                // Energy stars calculation (1 star per 3.33 pts)
+                const starsCount = Math.floor(totalScore / 3.33);
+                document.getElementById('hud-stars').textContent = `${starsCount}`;
+            }
+
+            getTotalScore() {
+                return Object.values(this.scores).reduce((a, b) => a + b, 0);
+            }
+
+            goToIdentity() {
+                this.sound.playClick();
+                this.showScreen('screen-identity');
+            }
+
+            submitIdentity(e) {
+                e.preventDefault();
+                const name = document.getElementById('input-name').value.trim();
+                const cls = document.getElementById('input-class').value.trim();
+                const err = document.getElementById('identity-error');
+
+                if (!name || !cls) {
+                    err.classList.remove('hidden');
+                    return;
+                }
+
+                err.classList.add('hidden');
+                this.student.name = name;
+                this.student.class = cls;
+                this.saveState();
+                this.sound.playClick();
+                this.navToGalaxy();
+            }
+
+            navToGalaxy() {
+                this.sound.playClick();
+                this.renderGalaxyMap();
+                this.showScreen('screen-galaxy');
+            }
+
+            renderGalaxyMap() {
+                const container = document.querySelector('#screen-galaxy .grid');
+                container.innerHTML = '';
+
+                GAME_DATA.planets.forEach(p => {
+                    const isUnlocked = p.id <= this.unlockedPlanet;
+                    const score = this.scores[p.id] || 0;
+
+                    const card = document.createElement('div');
+                    card.className = `glass-panel p-5 rounded-2xl border transition duration-300 relative overflow-hidden flex flex-col justify-between ${
+                        isUnlocked 
+                            ? 'border-cyan-500/50 hover:border-cyan-400 hover:shadow-xl cursor-pointer hover:-translate-y-1' 
+                            : 'border-slate-800 opacity-60 grayscale cursor-not-allowed'
+                    }`;
+
+                    card.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-4xl">${p.icon}</span>
+                                <span class="text-xs px-2.5 py-1 rounded-full font-bold ${
+                                    isUnlocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-500'
+                                }">
+                                    ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg">${p.name}</h3>
+                                <p class="text-xs text-cyan-300 mt-0.5">${p.mission}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                            <span class="text-slate-400">Score: <b class="text-yellow-400">${score}/20</b></span>
+                            ${isUnlocked 
+                                ? `<button onclick="app.openBriefing(${p.id})" class="px-3 py-1.5 bg-gradient-to-r ${p.color} text-white font-bold rounded-lg text-xs shadow">ENTER</button>`
+                                : `<i class="fas fa-lock text-slate-600 text-base"></i>`
+                            }
+                        </div>
+                    `;
+
+                    if (isUnlocked) {
+                        card.onclick = (e) => {
+                            if (e.target.tagName !== 'BUTTON') this.openBriefing(p.id);
+                        };
+                    }
+
+                    container.appendChild(card);
+                });
+
+                // Update Captain Nova Status Dialogue
+                const galaxyStatus = document.getElementById('galaxy-status-text');
+                if (this.unlockedPlanet > 5) {
+                    galaxyStatus.textContent = `"Superb! You have unlocked all planets and restored Planet Grammar!"`;
+                } else {
+                    galaxyStatus.textContent = `"Current objective: Complete Planet ${this.unlockedPlanet} (${GAME_DATA.planets[this.unlockedPlanet - 1].name})!"`;
+                }
+            }
+
+            openBriefing(planetId) {
+                this.sound.playClick();
+                this.currentPlanetId = planetId;
+                const planet = GAME_DATA.planets.find(p => p.id === planetId);
+
+                document.getElementById('briefing-planet-icon').textContent = planet.icon;
+                document.getElementById('briefing-planet-title').textContent = planet.name;
+                document.getElementById('briefing-content').innerHTML = planet.briefing;
+
+                this.showScreen('screen-material');
+            }
+
+            startQuizFromBriefing() {
+                this.sound.playClick();
+                this.currentQuestionIdx = 0;
+                this.scores[this.currentPlanetId] = 0; // Reset score for clean attempt on this planet
+                this.loadQuestion();
+                this.showScreen('screen-quiz');
+            }
+
+            loadQuestion() {
+                this.answeredCurrentQuestion = false;
+                const planet = GAME_DATA.planets.find(p => p.id === this.currentPlanetId);
+                const q = planet.questions[this.currentQuestionIdx];
+
+                // Update Headers
+                document.getElementById('quiz-planet-icon').textContent = planet.icon;
+                document.getElementById('quiz-planet-name').textContent = planet.name;
+                document.getElementById('quiz-question-counter').textContent = `Question ${this.currentQuestionIdx + 1} of ${planet.questions.length}`;
+
+                // Progress percentage
+                const pct = Math.round(((this.currentQuestionIdx) / planet.questions.length) * 100);
+                document.getElementById('quiz-progress-percent').textContent = `${pct}%`;
+                document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
+
+                // Reset dialogue
+                document.getElementById('quiz-dialogue-text').textContent = `"Read carefully and select the correct answer!"`;
+
+                // Character Avatar Box Logic
+                const charBox = document.getElementById('quiz-character-box');
+                if (q.character) {
+                    charBox.classList.remove('hidden');
+                    document.getElementById('quiz-character-avatar').textContent = q.character.avatar;
+                    document.getElementById('quiz-character-name').textContent = q.character.name;
+                    document.getElementById('quiz-character-desc').textContent = q.character.desc;
+                } else {
+                    charBox.classList.add('hidden');
+                }
+
+                // Question text
+                document.getElementById('quiz-question-text').textContent = q.text;
+
+                // Toggle between Word-Order sentence builder and Standard Multiple Choice
+                const optionsGrid = document.getElementById('quiz-options-grid');
+                const wordOrderContainer = document.getElementById('quiz-word-order-container');
+                document.getElementById('btn-next-question').classList.add('hidden');
+
+                if (q.type === 'word-order') {
+                    optionsGrid.classList.add('hidden');
+                    wordOrderContainer.classList.remove('hidden');
+                    this.initWordOrderQuestion(q);
+                } else {
+                    wordOrderContainer.classList.add('hidden');
+                    optionsGrid.classList.remove('hidden');
+                    this.initMultipleChoiceQuestion(q);
+                }
+            }
+
+            initMultipleChoiceQuestion(q) {
+                const grid = document.getElementById('quiz-options-grid');
+                grid.innerHTML = '';
+
+                q.options.forEach((optText, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `p-4 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-left text-base font-semibold text-slate-200 hover:text-white transition flex items-center space-x-3 btn-space`;
+                    btn.innerHTML = `
+                        <span class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-cyan-400 flex-shrink-0">
+                            ${String.fromCharCode(65 + idx)}
+                        </span>
+                        <span>${optText}</span>
+                    `;
+                    btn.onclick = () => this.checkMultipleChoiceAnswer(idx);
+                    grid.appendChild(btn);
+                });
+            }
+
+            checkMultipleChoiceAnswer(selectedIndex) {
+                if (this.answeredCurrentQuestion) return;
+                this.answeredCurrentQuestion = true;
+
+                const planet = GAME_DATA.planets.find(p => p.id === this.currentPlanetId);
+                const q = planet.questions[this.currentQuestionIdx];
+                const isCorrect = selectedIndex === q.answer;
+
+                const buttons = document.querySelectorAll('#quiz-options-grid button');
+                buttons.forEach((btn, idx) => {
+                    btn.disabled = true;
+                    if (idx === q.answer) {
+                        btn.className = `p-4 bg-emerald-600/30 border-2 border-emerald-500 rounded-2xl text-left text-base font-semibold text-emerald-200 flex items-center space-x-3`;
+                    } else if (idx === selectedIndex && !isCorrect) {
+                        btn.className = `p-4 bg-red-600/30 border-2 border-red-500 rounded-2xl text-left text-base font-semibold text-red-200 flex items-center space-x-3`;
+                    }
+                });
+
+                this.processAnswerResult(isCorrect, planet.pointsPerQ);
+            }
+
+            initWordOrderQuestion(q) {
+                this.selectedWords = [];
+                this.renderWordOrder();
+            }
+
+            renderWordOrder() {
+                const q = GAME_DATA.planets.find(p => p.id === this.currentPlanetId).questions[this.currentQuestionIdx];
+                const dropzone = document.getElementById('quiz-sentence-dropzone');
+                const wordBank = document.getElementById('quiz-word-bank');
+
+                dropzone.innerHTML = '';
+                wordBank.innerHTML = '';
+
+                if (this.selectedWords.length === 0) {
+                    dropzone.innerHTML = `<span class="text-xs text-slate-500 italic">Klik kata di bawah ini...</span>`;
+                } else {
+                    this.selectedWords.forEach((word, idx) => {
+                        const chip = document.createElement('span');
+                        chip.className = 'px-3 py-1.5 bg-cyan-500/20 border border-cyan-400 text-cyan-200 rounded-xl font-bold text-sm cursor-pointer hover:bg-red-500/20 hover:border-red-400 transition';
+                        chip.textContent = word;
+                        chip.onclick = () => {
+                            this.sound.playClick();
+                            this.selectedWords.splice(idx, 1);
+                            this.renderWordOrder();
+                        };
+                        dropzone.appendChild(chip);
+                    });
+                }
+
+                q.words.forEach(word => {
+                    const countInSelected = this.selectedWords.filter(w => w === word).length;
+                    const countInOriginal = q.words.filter(w => w === word).length;
+
+                    if (countInSelected < countInOriginal) {
+                        const tile = document.createElement('button');
+                        tile.className = 'px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl font-bold text-sm btn-space';
+                        tile.textContent = word;
+                        tile.onclick = () => {
+                            this.sound.playClick();
+                            this.selectedWords.push(word);
+                            this.renderWordOrder();
+                        };
+                        wordBank.appendChild(tile);
+                    }
+                });
+            }
+
+            clearWordOrder() {
+                this.sound.playClick();
+                this.selectedWords = [];
+                this.renderWordOrder();
+            }
+
+            submitWordOrder() {
+                if (this.answeredCurrentQuestion) return;
+                const q = GAME_DATA.planets.find(p => p.id === this.currentPlanetId).questions[this.currentQuestionIdx];
+                const constructedSentence = this.selectedWords.join(" ").trim();
+
+                if (!constructedSentence) {
+                    alert("Klik kata-kata untuk menyusun kalimat terlebih dahulu!");
+                    return;
+                }
+
+                this.answeredCurrentQuestion = true;
+                const isCorrect = constructedSentence.toLowerCase() === q.correctSentence.toLowerCase();
+                const planet = GAME_DATA.planets.find(p => p.id === this.currentPlanetId);
+
+                this.processAnswerResult(isCorrect, planet.pointsPerQ);
+            }
+
+            processAnswerResult(isCorrect, pts) {
+                const dialogue = document.getElementById('quiz-dialogue-text');
+
+                if (isCorrect) {
+                    this.sound.playCorrect();
+                    this.sound.playStar();
+                    this.scores[this.currentPlanetId] += pts;
+                    dialogue.innerHTML = `<span class="text-emerald-400 font-bold">"Excellent! Correct answer! You earned ${pts} points!"</span>`;
+                    this.triggerConfettiBurst(false);
+                } else {
+                    this.sound.playIncorrect();
+                    dialogue.innerHTML = `<span class="text-red-400 font-bold">"Not quite! Let's review the grammar rule!"</span>`;
+                }
+
+                this.updateHUD();
+                document.getElementById('btn-next-question').classList.remove('hidden');
+            }
+
+            nextQuestion() {
+                this.sound.playClick();
+                const planet = GAME_DATA.planets.find(p => p.id === this.currentPlanetId);
+                this.currentQuestionIdx++;
+
+                if (this.currentQuestionIdx < planet.questions.length) {
+                    this.loadQuestion();
+                } else {
+                    this.finishPlanetMission();
+                }
+            }
+
+            finishPlanetMission() {
+                this.saveState();
+
+                // Unlock next planet if cleared current
+                if (this.currentPlanetId === this.unlockedPlanet && this.unlockedPlanet < 5) {
+                    this.unlockedPlanet++;
+                    this.saveState();
+                }
+
+                if (this.currentPlanetId === 5 || this.getTotalScore() >= 100) {
+                    this.sound.playFanfare();
+                    this.triggerConfettiBurst(true);
+                    this.showResultsScreen();
+                } else {
+                    this.sound.playCorrect();
+                    this.navToGalaxy();
+                }
+            }
+
+            getPredicateRank(score) {
+                if (score >= 80) return "Space Master";
+                if (score >= 60) return "Space Explorer";
+                if (score >= 40) return "Junior Explorer";
+                return "Keep Exploring";
+            }
+
+            showResultsScreen() {
+                const totalScore = this.getTotalScore();
+                const rank = this.getPredicateRank(totalScore);
+                let msg = "Don't give up! Every mission makes you better!";
+
+                if (totalScore >= 80) {
+                    msg = "Congratulations! You are a Grammar Space Master!";
+                } else if (totalScore >= 60) {
+                    msg = "Great job! Keep exploring and learning!";
+                } else if (totalScore >= 40) {
+                    msg = "Good effort! Practice more to improve your grammar!";
+                }
+
+                document.getElementById('result-rank-title').textContent = rank.toUpperCase();
+                document.getElementById('result-rank-message').textContent = `"${msg}"`;
+                document.getElementById('result-name').textContent = this.student.name || 'Explorer';
+                document.getElementById('result-class').textContent = this.student.class || 'Grade VII';
+                document.getElementById('result-score').textContent = `${totalScore} / 100`;
+
+                // Calculate total correct answers out of 30
+                let correctCount = 0;
+                for (let pid = 1; pid <= 4; pid++) {
+                    correctCount += Math.round((this.scores[pid] || 0) / 4);
+                }
+                correctCount += Math.round((this.scores[5] || 0) / 2);
+
+                document.getElementById('result-correct').textContent = `${correctCount} / 30`;
+                document.getElementById('result-stars').textContent = `${Math.floor(totalScore / 3.33)} 🌟`;
+
+                this.showScreen('screen-results');
+            }
+
+            showCertificate() {
+                this.sound.playClick();
+                const totalScore = this.getTotalScore();
+                const rank = this.getPredicateRank(totalScore);
+
+                // Format current completion date
+                const now = new Date();
+                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                const formattedDate = now.toLocaleDateString('id-ID', options);
+
+                // Update certificate element details
+                document.getElementById('cert-student-name').textContent = this.student.name || 'Explorer Name';
+                document.getElementById('cert-student-class').textContent = `Class: ${this.student.class || 'VII'}`;
+                document.getElementById('cert-score').textContent = `${totalScore} / 100`;
+                document.getElementById('cert-title').textContent = rank;
+                document.getElementById('cert-date').textContent = formattedDate;
+                document.getElementById('cert-teacher-name').textContent = "Een Sukaeni, S.Pd., Gr.";
+
+                this.showScreen('screen-certificate');
+            }
+
+            downloadCertificatePDF() {
+                this.sound.playClick();
+                const studentName = this.student.name || 'Explorer';
+                const sanitizedName = studentName.replace(/[^a-zA-Z0-9]/g, '_');
+                const fileName = `Certificate_${sanitizedName}_GrammarSpaceMission.pdf`;
+
+                const element = document.getElementById('printable-certificate');
+
+                const btn = document.getElementById('btn-download-pdf');
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>GENERATING PDF...</span>`;
+
+                if (typeof html2pdf !== 'undefined') {
+                    const opt = {
+                        margin:       [5, 5, 5, 5],
+                        filename:     fileName,
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true, logging: false },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                    };
+
+                    html2pdf().set(opt).from(element).save().then(() => {
+                        if (btn) btn.innerHTML = originalHtml;
+                    }).catch(err => {
+                        console.warn('html2pdf generation failed, falling back to window.print()', err);
+                        if (btn) btn.innerHTML = originalHtml;
+                        window.print();
+                    });
+                } else {
+                    if (btn) btn.innerHTML = originalHtml;
+                    window.print();
+                }
+            }
+
+            speakQuestion() {
+                if (!('speechSynthesis' in window)) return;
+                const planet = GAME_DATA.planets.find(p => p.id === this.currentPlanetId);
+                const q = planet.questions[this.currentQuestionIdx];
+                const text = q.text;
+
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+
+            triggerConfettiBurst(isBig) {
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: isBig ? 120 : 50,
+                        spread: isBig ? 100 : 60,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }
+
+            restartGame() {
+                this.scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                this.unlockedPlanet = 1;
+                this.saveState();
+                this.navToGalaxy();
+            }
+        }
+
+        function initStarfield() {
+            const canvas = document.getElementById('starfield');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let width = (canvas.width = window.innerWidth);
+            let height = (canvas.height = window.innerHeight);
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const stars = Array.from({ length: 140 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1,
+                opacity: Math.random()
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                stars.forEach(star => {
+                    star.y -= star.speed;
+                    if (star.y < 0) {
+                        star.y = height;
+                        star.x = Math.random() * width;
+                    }
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(Date.now() * 0.002 + star.x) * 0.3})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // Global App Instance
+        let app;
+        window.addEventListener('DOMContentLoaded', () => {
+            initStarfield();
+            app = new GrammarSpaceApp();
+        });
+    </script>
+</body>
+</html>
